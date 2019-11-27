@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"middleware-bom/broker"
+	"middleware-bom/publisher"
 	"time"
 )
 
@@ -52,8 +53,8 @@ func main() {
 		}
 	}()
 
-	go b.Broadcast("mundo animal no discovery channel", "banana")
-	go b.Broadcast("jambo", "jambo")
+	p, _ := publisher.NewPublisher("banana", "localhost:5556")
+	p.Publish("trato feito")
 
 	time.Sleep(10000 * time.Second)
 }
