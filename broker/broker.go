@@ -1,6 +1,11 @@
 package broker
 
-import "sync"
+import (
+	"encoding/json"
+	"middleware-bom/model"
+	"net"
+	"sync"
+)
 
 type Broker struct {
 	subscribersCount uint64
@@ -90,4 +95,27 @@ func (b *Broker) GetTopics() []string {
 		topics = append(topics, topic)
 	}
 	return topics
+}
+
+func (b *Broker) Listen() {
+	listener, _ := net.Listen("tcp", "localhost:7474")
+	for {
+		conn, _ := listener.Accept()
+		go (func(b *Broker, conn net.Conn) {
+			jsonDecoder := json.NewDecoder(conn)
+			for {
+				var msg []byte
+				err := jsonDecoder.Decode(&msg)
+				if err != nil {
+					print(err)
+				}
+				var decodedMsg model.Message
+				err = json.Unmarshal(msg, &decodedMsg)
+				if err != nil {
+					panic(err)
+				}
+				b.Broadcast(string(decodedMsg.Content), decodedMsg.Topic)
+			}
+		})(b, conn)
+	}
 }

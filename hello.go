@@ -3,12 +3,14 @@ package main
 import (
 	"fmt"
 	"middleware-bom/broker"
+	"middleware-bom/model"
 	"middleware-bom/publisher"
 	"time"
 )
 
 func main() {
 	b := broker.NewBroker()
+	go b.Listen()
 	s1 := b.Attach()
 	s2 := b.Attach()
 	s3 := b.Attach()
@@ -53,8 +55,8 @@ func main() {
 		}
 	}()
 
-	p, _ := publisher.NewPublisher("banana", "localhost:5556")
-	p.Publish("trato feito")
+	p, _ := publisher.NewPublisher("banana", "localhost:7474")
+	p.Publish(model.Content{Content: "trato feito"})
 
 	time.Sleep(10000 * time.Second)
 }
