@@ -1,105 +1,72 @@
 package main
 
 import (
-	"encoding/json"
+	"fmt"
 	"middleware-bom/broker"
 	"middleware-bom/model"
 	"middleware-bom/publisher"
-	"net"
+	"middleware-bom/subscriber"
 	"time"
 )
+
+const address  = "localhost:7474"
 
 func main() {
 	b := broker.NewBroker()
 	go b.Listen()
 
-	go func() {
-		conn, _ := net.Dial("tcp", "localhost:7474")
-		encoder := json.NewEncoder(conn)
-		jsonContent, _ := json.Marshal(model.Content{Content: "sub"})
-		msg := model.Message{
-			Topic:   "banana",
-			Content: jsonContent,
-		}
-		msgMarshalled, _ := json.Marshal(msg)
-		encoder.Encode(msgMarshalled)
-		for {
-			jsonDecoder := json.NewDecoder(conn)
-			var msg []byte
-			err := jsonDecoder.Decode(&msg)
-			if err != nil {
-				print(err)
-			}
-			var decodedMsg model.Message
-			err = json.Unmarshal(msg, &decodedMsg)
-			if err != nil {
-				panic(err)
-			}
-			var content model.Content
-			err = json.Unmarshal(decodedMsg.Content, &content)
-			print(decodedMsg.Topic, content.Content)
-		}
-	}()
+	s1, _ := subscriber.NewSubscriber("banana", address)
+	s2, _ := subscriber.NewSubscriber("banana", address)
+	s3, _ := subscriber.NewSubscriber("banana", address)
+	c1 := s1.Subscribe()
+	c2 := s2.Subscribe()
+	c3 := s3.Subscribe()
 
-	go func() {
-		conn, _ := net.Dial("tcp", "localhost:7474")
-		encoder := json.NewEncoder(conn)
-		jsonContent, _ := json.Marshal(model.Content{Content: "sub"})
-		msg := model.Message{
-			Topic:   "jambo",
-			Content: jsonContent,
-		}
-		msgMarshalled, _ := json.Marshal(msg)
-		encoder.Encode(msgMarshalled)
+	go (func() {
 		for {
-			jsonDecoder := json.NewDecoder(conn)
-			var msg []byte
-			err := jsonDecoder.Decode(&msg)
-			if err != nil {
-				print(err)
+			j, more := <-c1
+			if more {
+				fmt.Println("received msg", j)
+			} else {
+				fmt.Println("received all msgs")
+				return
 			}
-			var decodedMsg model.Message
-			err = json.Unmarshal(msg, &decodedMsg)
-			if err != nil {
-				panic(err)
-			}
-			var content model.Content
-			err = json.Unmarshal(decodedMsg.Content, &content)
-			print(decodedMsg.Topic, content.Content)
 		}
-	}()
+	})()
 
-	go func() {
-		conn, _ := net.Dial("tcp", "localhost:7474")
-		encoder := json.NewEncoder(conn)
-		jsonContent, _ := json.Marshal(model.Content{Content: "sub"})
-		msg := model.Message{
-			Topic:   "banana",
-			Content: jsonContent,
-		}
-		msgMarshalled, _ := json.Marshal(msg)
-		encoder.Encode(msgMarshalled)
+	go (func() {
 		for {
-			jsonDecoder := json.NewDecoder(conn)
-			var msg []byte
-			err := jsonDecoder.Decode(&msg)
-			if err != nil {
-				print(err)
+			j, more := <-c2
+			if more {
+				fmt.Println("received msg", j)
+			} else {
+				fmt.Println("received all msgs")
+				return
 			}
-			var decodedMsg model.Message
-			err = json.Unmarshal(msg, &decodedMsg)
-			if err != nil {
-				panic(err)
-			}
-			var content model.Content
-			err = json.Unmarshal(decodedMsg.Content, &content)
-			print(decodedMsg.Topic, content.Content)
 		}
-	}()
+	})()
+
+	go (func() {
+		for {
+			j, more := <-c3
+			if more {
+				fmt.Println("received msg", j)
+			} else {
+				fmt.Println("received all msgs")
+				return
+			}
+		}
+	})()
 
 	time.Sleep(2 * time.Second)
-	p, _ := publisher.NewPublisher("banana", "localhost:7474")
+	p, _ := publisher.NewPublisher("banana", address)
 	p.Publish(model.Content{Content: "trato feito"})
+	p.Publish(model.Content{Content: "trato feito22"})
+
+	time.Sleep(2 * time.Second)
+	s1.Unsubscribe()
+	s2.Unsubscribe()
+	s3.Unsubscribe()
 
 	time.Sleep(10000 * time.Second)
 }

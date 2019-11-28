@@ -105,12 +105,13 @@ func (b *Broker) Listen() {
 	for {
 		conn, _ := listener.Accept()
 		go (func(b *Broker, conn net.Conn) {
+			var s *Subscriber
 			jsonDecoder := json.NewDecoder(conn)
 			for {
 				var msg []byte
 				err := jsonDecoder.Decode(&msg)
 				if err != nil {
-					print(err)
+					panic(err)
 				}
 				var decodedMsg model.Message
 				err = json.Unmarshal(msg, &decodedMsg)
@@ -123,9 +124,10 @@ func (b *Broker) Listen() {
 					panic(err)
 				}
 				if content.Content == "sub" {
-					print("subbed!!")
-					s := b.Attach(conn)
+					s = b.Attach(conn)
 					b.Subscribe(s, decodedMsg.Topic)
+				}else if content.Content == "unsub"{
+					b.Detach(s)
 				}else{
 					b.Broadcast(content.Content, decodedMsg.Topic)
 				}
