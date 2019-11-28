@@ -23,7 +23,7 @@ func NewBroker() *Broker {
 	}
 }
 
-func (b *Broker) Attach() *Subscriber {
+func (b *Broker) Attach(conn net.Conn) *Subscriber {
 	b.subscribersLock.Lock()
 	defer b.subscribersLock.Unlock()
 	id := b.subscribersCount
@@ -33,7 +33,10 @@ func (b *Broker) Attach() *Subscriber {
 		messages: make(chan *Message),
 		lock:     &sync.RWMutex{},
 		topic:    "",
+		connection: conn,
+		encoder: json.NewEncoder(conn),
 	}
+	go s.ListenMessages()
 	return s
 }
 
@@ -114,7 +117,18 @@ func (b *Broker) Listen() {
 				if err != nil {
 					panic(err)
 				}
-				b.Broadcast(string(decodedMsg.Content), decodedMsg.Topic)
+				var content model.Content
+				err = json.Unmarshal(decodedMsg.Content, &content)
+				if err != nil {
+					panic(err)
+				}
+				if content.Content == "sub" {
+					print("subbed!!")
+					s := b.Attach(conn)
+					b.Subscribe(s, decodedMsg.Topic)
+				}else{
+					b.Broadcast(content.Content, decodedMsg.Topic)
+				}
 			}
 		})(b, conn)
 	}

@@ -1,60 +1,103 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"middleware-bom/broker"
 	"middleware-bom/model"
 	"middleware-bom/publisher"
+	"net"
 	"time"
 )
 
 func main() {
 	b := broker.NewBroker()
 	go b.Listen()
-	s1 := b.Attach()
-	s2 := b.Attach()
-	s3 := b.Attach()
-
-	b.Subscribe(s1, "banana")
-	b.Subscribe(s2, "jambo")
-	b.Subscribe(s3, "banana")
 
 	go func() {
+		conn, _ := net.Dial("tcp", "localhost:7474")
+		encoder := json.NewEncoder(conn)
+		jsonContent, _ := json.Marshal(model.Content{Content: "sub"})
+		msg := model.Message{
+			Topic:   "banana",
+			Content: jsonContent,
+		}
+		msgMarshalled, _ := json.Marshal(msg)
+		encoder.Encode(msgMarshalled)
 		for {
-			j, more := <-s1.GetMessages()
-			if more {
-				fmt.Println("s1 received message: ", j)
-			} else {
-				fmt.Println("s1 has closed")
-				return
+			jsonDecoder := json.NewDecoder(conn)
+			var msg []byte
+			err := jsonDecoder.Decode(&msg)
+			if err != nil {
+				print(err)
 			}
+			var decodedMsg model.Message
+			err = json.Unmarshal(msg, &decodedMsg)
+			if err != nil {
+				panic(err)
+			}
+			var content model.Content
+			err = json.Unmarshal(decodedMsg.Content, &content)
+			print(decodedMsg.Topic, content.Content)
 		}
 	}()
 
 	go func() {
+		conn, _ := net.Dial("tcp", "localhost:7474")
+		encoder := json.NewEncoder(conn)
+		jsonContent, _ := json.Marshal(model.Content{Content: "sub"})
+		msg := model.Message{
+			Topic:   "jambo",
+			Content: jsonContent,
+		}
+		msgMarshalled, _ := json.Marshal(msg)
+		encoder.Encode(msgMarshalled)
 		for {
-			j, more := <-s2.GetMessages()
-			if more {
-				fmt.Println("s2 received message: ", j)
-			} else {
-				fmt.Println("s2 has closed")
-				return
+			jsonDecoder := json.NewDecoder(conn)
+			var msg []byte
+			err := jsonDecoder.Decode(&msg)
+			if err != nil {
+				print(err)
 			}
+			var decodedMsg model.Message
+			err = json.Unmarshal(msg, &decodedMsg)
+			if err != nil {
+				panic(err)
+			}
+			var content model.Content
+			err = json.Unmarshal(decodedMsg.Content, &content)
+			print(decodedMsg.Topic, content.Content)
 		}
 	}()
 
 	go func() {
+		conn, _ := net.Dial("tcp", "localhost:7474")
+		encoder := json.NewEncoder(conn)
+		jsonContent, _ := json.Marshal(model.Content{Content: "sub"})
+		msg := model.Message{
+			Topic:   "banana",
+			Content: jsonContent,
+		}
+		msgMarshalled, _ := json.Marshal(msg)
+		encoder.Encode(msgMarshalled)
 		for {
-			j, more := <-s3.GetMessages()
-			if more {
-				fmt.Println("s3 received message: ", j)
-			} else {
-				fmt.Println("s3 has closed")
-				return
+			jsonDecoder := json.NewDecoder(conn)
+			var msg []byte
+			err := jsonDecoder.Decode(&msg)
+			if err != nil {
+				print(err)
 			}
+			var decodedMsg model.Message
+			err = json.Unmarshal(msg, &decodedMsg)
+			if err != nil {
+				panic(err)
+			}
+			var content model.Content
+			err = json.Unmarshal(decodedMsg.Content, &content)
+			print(decodedMsg.Topic, content.Content)
 		}
 	}()
 
+	time.Sleep(2 * time.Second)
 	p, _ := publisher.NewPublisher("banana", "localhost:7474")
 	p.Publish(model.Content{Content: "trato feito"})
 
