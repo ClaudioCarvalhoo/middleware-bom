@@ -2,7 +2,7 @@ package broker
 
 import (
 	"encoding/json"
-	"middleware-bom/model"
+	"middleware-bom/util"
 	"net"
 	"sync"
 )
@@ -29,12 +29,12 @@ func (b *Broker) Attach(conn net.Conn) *Subscriber {
 	id := b.subscribersCount
 	b.subscribersCount = b.subscribersCount + 1
 	s := &Subscriber{
-		id:       id,
-		messages: make(chan *Message),
-		lock:     &sync.RWMutex{},
-		topic:    "",
+		id:         id,
+		messages:   make(chan *Message),
+		lock:       &sync.RWMutex{},
+		topic:      "",
 		connection: conn,
-		encoder: json.NewEncoder(conn),
+		encoder:    json.NewEncoder(conn),
 	}
 	go s.ListenMessages()
 	return s
@@ -108,28 +108,15 @@ func (b *Broker) Listen() {
 			var s *Subscriber
 			jsonDecoder := json.NewDecoder(conn)
 			for {
-				var msg []byte
-				err := jsonDecoder.Decode(&msg)
-				if err != nil {
-					panic(err)
-				}
-				var decodedMsg model.Message
-				err = json.Unmarshal(msg, &decodedMsg)
-				if err != nil {
-					panic(err)
-				}
-				var content model.Content
-				err = json.Unmarshal(decodedMsg.Content, &content)
-				if err != nil {
-					panic(err)
-				}
+				message, content := util.ReceiveMessage(jsonDecoder)
+				topic := message.Topic
 				if content.Content == "sub" {
 					s = b.Attach(conn)
-					b.Subscribe(s, decodedMsg.Topic)
-				}else if content.Content == "unsub"{
+					b.Subscribe(s, topic)
+				} else if content.Content == "unsub" {
 					b.Detach(s)
-				}else{
-					b.Broadcast(content.Content, decodedMsg.Topic)
+				} else {
+					b.Broadcast(content.Content, topic)
 				}
 			}
 		})(b, conn)

@@ -9,15 +9,15 @@ import (
 	"time"
 )
 
-const address  = "localhost:7474"
+const address = "localhost:7474"
 
 func main() {
 	b := broker.NewBroker()
 	go b.Listen()
 
-	s1, _ := subscriber.NewSubscriber("banana", address)
-	s2, _ := subscriber.NewSubscriber("banana", address)
-	s3, _ := subscriber.NewSubscriber("banana", address)
+	s1 := subscriber.NewSubscriber("banana", address)
+	s2 := subscriber.NewSubscriber("banana", address)
+	s3 := subscriber.NewSubscriber("banana", address)
 	c1 := s1.Subscribe()
 	c2 := s2.Subscribe()
 	c3 := s3.Subscribe()
@@ -59,7 +59,7 @@ func main() {
 	})()
 
 	time.Sleep(2 * time.Second)
-	p, _ := publisher.NewPublisher("banana", address)
+	p := publisher.NewPublisher("banana", address)
 	p.Publish(model.Content{Content: "trato feito"})
 	p.Publish(model.Content{Content: "trato feito22"})
 

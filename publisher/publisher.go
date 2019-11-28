@@ -2,7 +2,7 @@ package publisher
 
 import (
 	"encoding/json"
-	"middleware-bom/model"
+	"middleware-bom/util"
 	"net"
 )
 
@@ -12,27 +12,17 @@ type Publisher struct {
 	encoder    *json.Encoder
 }
 
-func NewPublisher(topic string, address string) (*Publisher, error) {
+func NewPublisher(topic string, address string) *Publisher {
 	conn, err := net.Dial("tcp", address)
-	if err != nil {
-		panic(err)
-	}
+	util.PanicIfErr(err)
 
 	return &Publisher{
 		topic:      topic,
 		connection: conn,
 		encoder:    json.NewEncoder(conn),
-	}, nil
+	}
 }
 
 func (p *Publisher) Publish(content interface{}) {
-	jsonContent, _ := json.Marshal(content)
-
-	msg := model.Message{
-		Topic:   p.topic,
-		Content: jsonContent,
-	}
-
-	msgMarshalled, _ := json.Marshal(msg)
-	p.encoder.Encode(msgMarshalled)
+	util.SendMessage(p.topic, p.encoder, content)
 }
