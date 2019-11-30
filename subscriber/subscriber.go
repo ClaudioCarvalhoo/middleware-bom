@@ -20,7 +20,7 @@ func NewSubscriber(topic string, address string) (*Subscriber, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &Subscriber{
 		topic:      topic,
 		connection: conn,
@@ -49,7 +49,7 @@ func (s *Subscriber) Subscribe() chan interface{} {
 					content := model.Content{Content: "►►►sub◄◄◄"}
 					util.SendMessage(s.topic, s.encoder, content)
 				}
-			}else{
+			} else {
 				if cont.Content == "►►►closed◄◄◄" {
 					close(c)
 				} else {

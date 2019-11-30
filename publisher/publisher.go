@@ -46,7 +46,7 @@ func (p *Publisher) startOfflineQueue() {
 						continue
 					}
 					break
-				}else{
+				} else {
 					time.Sleep(100 * time.Millisecond)
 					conn, err := net.Dial("tcp", p.connection.RemoteAddr().String())
 					if err == nil {

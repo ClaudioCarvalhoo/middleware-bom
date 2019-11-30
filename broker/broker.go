@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+const address = "localhost:7474"
+
 type Broker struct {
 	subscribersCount uint64
 	subscribersLock  sync.RWMutex
@@ -101,13 +103,15 @@ func (b *Broker) GetTopics() []string {
 }
 
 func (b *Broker) Listen() {
+	// Listen warmup
 	first := true
 	broadcastOn := make(chan bool, 1)
 	go (func(chan bool) {
 		time.Sleep(150 * time.Millisecond)
 		broadcastOn <- true
 	})(broadcastOn)
-	listener, _ := net.Listen("tcp", "localhost:7474")
+
+	listener, _ := net.Listen("tcp", address)
 	for {
 		conn, _ := listener.Accept()
 		go (func(b *Broker, conn net.Conn) {
@@ -129,10 +133,11 @@ func (b *Broker) Listen() {
 					continue
 				} else {
 					if first {
-						<- broadcastOn
+						ok := <-broadcastOn
+						broadcastOn <- ok
 						first = false
+						println("End of listen warmup")
 					}
-					print(content.Content)
 					b.Broadcast(content.Content, topic)
 				}
 			}

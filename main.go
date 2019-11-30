@@ -25,7 +25,7 @@ func main() {
 			topic, _ := reader.ReadString('\n')
 			p, err := publisher.NewPublisher(topic, address)
 			util.PanicIfErr(err)
-			for{
+			for {
 				fmt.Println("Enter the message you want to publish to topic " + strings.TrimRight(topic, "\n") + ".")
 				message, _ := reader.ReadString('\n')
 				p.Publish(model.Content{Content: message})
@@ -62,11 +62,12 @@ func main() {
 						}
 					}
 				})()
-				<- end
+				<-end
 				fmt.Println("==================================================")
 			}
 		} else if strings.HasPrefix(choice, "3") {
 			// BROKER
+			println("Initializing broker")
 			b := broker.NewBroker()
 			b.Listen()
 		} else {
