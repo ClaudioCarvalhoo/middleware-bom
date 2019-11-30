@@ -115,6 +115,8 @@ func (b *Broker) Listen() {
 					b.Subscribe(s, topic)
 				} else if content.Content == "unsub" {
 					b.Detach(s)
+				} else if content.Content == "ping" {
+					continue
 				} else {
 					b.Broadcast(content.Content, topic)
 				}

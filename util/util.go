@@ -5,7 +5,7 @@ import (
 	"middleware-bom/model"
 )
 
-func SendMessage(topic string, encoder *json.Encoder, content interface{}) {
+func SendMessage(topic string, encoder *json.Encoder, content interface{}) error {
 	jsonContent, _ := json.Marshal(content)
 
 	msg := model.Message{
@@ -15,7 +15,7 @@ func SendMessage(topic string, encoder *json.Encoder, content interface{}) {
 
 	msgMarshalled, _ := json.Marshal(msg)
 	err := encoder.Encode(msgMarshalled)
-	PanicIfErr(err)
+	return err
 }
 
 func ReceiveMessage(decoder *json.Decoder) (model.Message, model.Content) {
