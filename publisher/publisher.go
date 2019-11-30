@@ -38,7 +38,10 @@ func (p *Publisher) startOfflineQueue() {
 		if more {
 			for {
 				if p.pingBroker() {
-					util.SendMessage(p.topic, p.encoder, content)
+					err := util.SendMessage(p.topic, p.encoder, content)
+					if err != nil {
+						continue
+					}
 					break
 				}
 			}
