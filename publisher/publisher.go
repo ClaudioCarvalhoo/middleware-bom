@@ -15,9 +15,11 @@ type Publisher struct {
 	offlineQueue chan interface{}
 }
 
-func NewPublisher(topic string, address string) *Publisher {
+func NewPublisher(topic string, address string) (*Publisher, error) {
 	conn, err := net.Dial("tcp", address)
-	util.PanicIfErr(err)
+	if err != nil {
+		return nil, err
+	}
 
 	p := &Publisher{
 		topic:        topic,
@@ -26,7 +28,7 @@ func NewPublisher(topic string, address string) *Publisher {
 		offlineQueue: make(chan interface{}, 74000),
 	}
 	go p.startOfflineQueue()
-	return p
+	return p, nil
 }
 
 func (p *Publisher) Publish(content interface{}) {

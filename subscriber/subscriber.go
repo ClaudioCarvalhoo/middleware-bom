@@ -15,16 +15,18 @@ type Subscriber struct {
 	decoder    *json.Decoder
 }
 
-func NewSubscriber(topic string, address string) *Subscriber {
+func NewSubscriber(topic string, address string) (*Subscriber, error) {
 	conn, err := net.Dial("tcp", address)
-	util.PanicIfErr(err)
-
+	if err != nil {
+		return nil, err
+	}
+	
 	return &Subscriber{
 		topic:      topic,
 		connection: conn,
 		encoder:    json.NewEncoder(conn),
 		decoder:    json.NewDecoder(conn),
-	}
+	}, nil
 }
 
 func (s *Subscriber) Subscribe() chan interface{} {

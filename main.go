@@ -7,6 +7,7 @@ import (
 	"middleware-bom/model"
 	"middleware-bom/publisher"
 	"middleware-bom/subscriber"
+	"middleware-bom/util"
 	"os"
 	"strings"
 )
@@ -22,7 +23,8 @@ func main() {
 			// PUBLISHER
 			fmt.Println("Enter the name of the topic you want to publish to.")
 			topic, _ := reader.ReadString('\n')
-			p := publisher.NewPublisher(topic, address)
+			p, err := publisher.NewPublisher(topic, address)
+			util.PanicIfErr(err)
 			for{
 				fmt.Println("Enter the message you want to publish to topic " + strings.TrimRight(topic, "\n") + ".")
 				message, _ := reader.ReadString('\n')
@@ -35,7 +37,8 @@ func main() {
 			for {
 				fmt.Println("Enter the name of the topic you want to subscribe to.")
 				topic, _ := reader.ReadString('\n')
-				s1 := subscriber.NewSubscriber(topic, address)
+				s1, err := subscriber.NewSubscriber(topic, address)
+				util.PanicIfErr(err)
 				c1 := s1.Subscribe()
 				fmt.Println("Enter x at any time to unsubscribe from topic.")
 				go (func(chan interface{}) {
