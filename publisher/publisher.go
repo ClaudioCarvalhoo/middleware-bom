@@ -52,7 +52,7 @@ func (p *Publisher) startOfflineQueue() {
 }
 
 func (p *Publisher) pingBroker() bool {
-	err := util.SendMessage("ping", p.encoder, model.Content{Content: "ping"})
+	err := util.SendMessage("ping", p.encoder, model.Content{Content: "►►►ping◄◄◄"})
 	if err != nil {
 		return false
 	} else {

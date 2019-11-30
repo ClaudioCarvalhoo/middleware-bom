@@ -29,13 +29,13 @@ func NewSubscriber(topic string, address string) *Subscriber {
 func (s *Subscriber) Subscribe() chan interface{} {
 	c := make(chan interface{})
 
-	content := model.Content{Content: "sub"}
+	content := model.Content{Content: "►►►sub◄◄◄"}
 	util.SendMessage(s.topic, s.encoder, content)
 
 	go (func(c chan interface{}) {
 		for {
 			_, cont := util.ReceiveMessage(s.decoder)
-			if cont.Content == "closed" {
+			if cont.Content == "►►►closed◄◄◄" {
 				close(c)
 			} else {
 				c <- cont.Content
@@ -47,6 +47,6 @@ func (s *Subscriber) Subscribe() chan interface{} {
 }
 
 func (s *Subscriber) Unsubscribe() {
-	content := model.Content{Content: "unsub"}
+	content := model.Content{Content: "►►►unsub◄◄◄"}
 	util.SendMessage(s.topic, s.encoder, content)
 }

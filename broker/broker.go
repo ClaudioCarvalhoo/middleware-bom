@@ -110,12 +110,12 @@ func (b *Broker) Listen() {
 			for {
 				message, content := util.ReceiveMessage(jsonDecoder)
 				topic := message.Topic
-				if content.Content == "sub" {
+				if content.Content == "►►►sub◄◄◄" {
 					s = b.Attach(conn)
 					b.Subscribe(s, topic)
-				} else if content.Content == "unsub" {
+				} else if content.Content == "►►►unsub◄◄◄" {
 					b.Detach(s)
-				} else if content.Content == "ping" {
+				} else if content.Content == "►►►ping◄◄◄" {
 					continue
 				} else {
 					b.Broadcast(content.Content, topic)

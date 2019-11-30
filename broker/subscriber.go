@@ -26,7 +26,7 @@ func (s *Subscriber) ListenMessages() {
 			content := model.Content{Content: msg.payload.(string)}
 			util.SendMessage(s.topic, s.encoder, content)
 		} else {
-			content := model.Content{Content: "closed"}
+			content := model.Content{Content: "►►►closed◄◄◄"}
 			util.SendMessage(s.topic, s.encoder, content)
 			return
 		}
