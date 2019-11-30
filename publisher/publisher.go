@@ -47,9 +47,11 @@ func (p *Publisher) startOfflineQueue() {
 					}
 					break
 				} else {
+					// Try to reestablish connection
 					time.Sleep(100 * time.Millisecond)
 					conn, err := net.Dial("tcp", p.connection.RemoteAddr().String())
 					if err == nil {
+						// Connection reestablished
 						p.connection = conn
 						p.encoder = json.NewEncoder(conn)
 						err = nil

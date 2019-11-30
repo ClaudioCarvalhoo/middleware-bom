@@ -39,17 +39,19 @@ func (s *Subscriber) Subscribe() chan interface{} {
 		for {
 			_, cont, err := util.ReceiveMessage(s.decoder)
 			if err != nil {
+				// Try to reestablish connection
 				time.Sleep(100 * time.Millisecond)
 				conn, err := net.Dial("tcp", s.connection.RemoteAddr().String())
 				if err == nil {
+					// Connection reestablished
 					s.connection = conn
 					s.encoder = json.NewEncoder(conn)
 					s.decoder = json.NewDecoder(conn)
-					err = nil
 					content := model.Content{Content: "►►►sub◄◄◄"}
-					util.SendMessage(s.topic, s.encoder, content)
+					err = util.SendMessage(s.topic, s.encoder, content)
 				}
 			} else {
+				// Message received
 				if cont.Content == "►►►closed◄◄◄" {
 					close(c)
 				} else {

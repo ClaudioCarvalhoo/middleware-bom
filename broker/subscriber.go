@@ -5,6 +5,7 @@ import (
 	"middleware-bom/model"
 	"middleware-bom/util"
 	"net"
+	"time"
 )
 
 type Subscribers map[uint64]*Subscriber
@@ -17,17 +18,23 @@ type Subscriber struct {
 	encoder    *json.Encoder
 }
 
-func (s *Subscriber) ListenMessages() {
+func (s *Subscriber) ListenMessages(b *Broker) {
 	for {
 		msg, more := <-s.messages
 		if more {
 			content := model.Content{Content: msg.payload.(string)}
-			util.SendMessage(s.topic, s.encoder, content)
-			print("sent ")
-			println(content.Content)
+			ok := s.sendMessageRetrying(content)
+			if !ok {
+				// Connection lost
+				b.Detach(s)
+			}
 		} else {
 			content := model.Content{Content: "►►►closed◄◄◄"}
-			util.SendMessage(s.topic, s.encoder, content)
+			ok := s.sendMessageRetrying(content)
+			if !ok {
+				// Connection lost
+				b.Detach(s)
+			}
 			return
 		}
 	}
@@ -38,6 +45,25 @@ func (s *Subscriber) SendMessage(m *Message) *Subscriber {
 	return s
 }
 
-func (s *Subscriber) close() {
+func (s *Subscriber) Close() {
 	close(s.messages)
+}
+
+func (s *Subscriber) sendMessageRetrying(content model.Content) bool{
+	tries := 0
+	for {
+		err := util.SendMessage(s.topic, s.encoder, content)
+		if err == nil{
+			// Sent ok
+			return true
+		}else{
+			// Couldn't send message
+			time.Sleep(100 * time.Millisecond)
+			tries = tries + 1
+			if tries >= 500 {
+				// Enough tries, kill subscriber
+				return false
+			}
+		}
+	}
 }

@@ -38,14 +38,14 @@ func (b *Broker) Attach(conn net.Conn) *Subscriber {
 		connection: conn,
 		encoder:    json.NewEncoder(conn),
 	}
-	go s.ListenMessages()
+	go s.ListenMessages(b)
 	return s
 }
 
 func (b *Broker) Detach(s *Subscriber) {
 	b.subscribersLock.Lock()
 	defer b.subscribersLock.Unlock()
-	s.close()
+	s.Close()
 	b.Unsubscribe(s, s.topic)
 }
 
@@ -108,6 +108,7 @@ func (b *Broker) Listen() {
 	broadcastOn := make(chan bool, 1)
 	go (func(chan bool) {
 		time.Sleep(150 * time.Millisecond)
+		println("End of listen warmup")
 		broadcastOn <- true
 	})(broadcastOn)
 
@@ -136,7 +137,6 @@ func (b *Broker) Listen() {
 						ok := <-broadcastOn
 						broadcastOn <- ok
 						first = false
-						println("End of listen warmup")
 					}
 					b.Broadcast(content.Content, topic)
 				}
