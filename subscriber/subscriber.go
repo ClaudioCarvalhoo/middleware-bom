@@ -54,6 +54,7 @@ func (s *Subscriber) Subscribe() chan interface{} {
 				// Message received
 				if cont.Content == "►►►closed◄◄◄" {
 					close(c)
+					return
 				} else {
 					c <- cont.Content
 				}
