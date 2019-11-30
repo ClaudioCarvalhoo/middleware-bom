@@ -5,7 +5,6 @@ import (
 	"middleware-bom/model"
 	"middleware-bom/util"
 	"net"
-	"sync"
 )
 
 type Subscribers map[uint64]*Subscriber
@@ -14,7 +13,6 @@ type Subscriber struct {
 	id         uint64
 	messages   chan *Message
 	topic      string
-	lock       *sync.RWMutex
 	connection net.Conn
 	encoder    *json.Encoder
 }
@@ -25,6 +23,8 @@ func (s *Subscriber) ListenMessages() {
 		if more {
 			content := model.Content{Content: msg.payload.(string)}
 			util.SendMessage(s.topic, s.encoder, content)
+			print("sent ")
+			println(content.Content)
 		} else {
 			content := model.Content{Content: "►►►closed◄◄◄"}
 			util.SendMessage(s.topic, s.encoder, content)
@@ -39,7 +39,5 @@ func (s *Subscriber) SendMessage(m *Message) *Subscriber {
 }
 
 func (s *Subscriber) close() {
-	s.lock.Lock()
-	defer s.lock.Unlock()
 	close(s.messages)
 }

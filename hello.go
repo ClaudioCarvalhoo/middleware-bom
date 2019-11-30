@@ -31,12 +31,12 @@ func main() {
 			}
 		} else if strings.HasPrefix(choice, "2") {
 			// SUBSCRIBER
+			end := make(chan interface{}, 74000)
 			for {
 				fmt.Println("Enter the name of the topic you want to subscribe to.")
 				topic, _ := reader.ReadString('\n')
 				s1 := subscriber.NewSubscriber(topic, address)
 				c1 := s1.Subscribe()
-				end := make(chan interface{}, 74000)
 				fmt.Println("Enter x at any time to unsubscribe from topic.")
 				go (func(chan interface{}) {
 					for {
@@ -55,6 +55,7 @@ func main() {
 						unsub, _ := reader.ReadString('\n')
 						if strings.HasPrefix(unsub, "x") {
 							s1.Unsubscribe()
+							break
 						}
 					}
 				})()

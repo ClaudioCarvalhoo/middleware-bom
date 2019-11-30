@@ -32,7 +32,6 @@ func (b *Broker) Attach(conn net.Conn) *Subscriber {
 	s := &Subscriber{
 		id:         id,
 		messages:   make(chan *Message, 74000),
-		lock:       &sync.RWMutex{},
 		topic:      "",
 		connection: conn,
 		encoder:    json.NewEncoder(conn),
@@ -102,6 +101,12 @@ func (b *Broker) GetTopics() []string {
 }
 
 func (b *Broker) Listen() {
+	first := true
+	broadcastOn := make(chan bool, 1)
+	go (func(chan bool) {
+		time.Sleep(150 * time.Millisecond)
+		broadcastOn <- true
+	})(broadcastOn)
 	listener, _ := net.Listen("tcp", "localhost:7474")
 	for {
 		conn, _ := listener.Accept()
@@ -123,6 +128,10 @@ func (b *Broker) Listen() {
 				} else if content.Content == "►►►ping◄◄◄" {
 					continue
 				} else {
+					if first {
+						<- broadcastOn
+						first = false
+					}
 					print(content.Content)
 					b.Broadcast(content.Content, topic)
 				}

@@ -44,7 +44,8 @@ func (s *Subscriber) Subscribe() chan interface{} {
 					s.encoder = json.NewEncoder(conn)
 					s.decoder = json.NewDecoder(conn)
 					err = nil
-					s.Subscribe()
+					content := model.Content{Content: "►►►sub◄◄◄"}
+					util.SendMessage(s.topic, s.encoder, content)
 				}
 			}else{
 				if cont.Content == "►►►closed◄◄◄" {
