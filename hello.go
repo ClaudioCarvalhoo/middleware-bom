@@ -1,72 +1,72 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"middleware-bom/broker"
 	"middleware-bom/model"
 	"middleware-bom/publisher"
 	"middleware-bom/subscriber"
-	"time"
+	"os"
+	"strings"
 )
 
 const address = "localhost:7474"
 
 func main() {
-	b := broker.NewBroker()
-	go b.Listen()
-
-	s1 := subscriber.NewSubscriber("banana", address)
-	s2 := subscriber.NewSubscriber("banana", address)
-	s3 := subscriber.NewSubscriber("banana", address)
-	c1 := s1.Subscribe()
-	c2 := s2.Subscribe()
-	c3 := s3.Subscribe()
-
-	go (func() {
-		for {
-			j, more := <-c1
-			if more {
-				fmt.Println("received msg", j)
-			} else {
-				fmt.Println("received all msgs")
-				return
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Println("Enter 1 for publisher, 2 for subscriber, or 3 for broker.")
+	for {
+		choice, _ := reader.ReadString('\n')
+		if strings.HasPrefix(choice, "1") {
+			// PUBLISHER
+			fmt.Println("Enter the name of the topic you want to publish to.")
+			topic, _ := reader.ReadString('\n')
+			p := publisher.NewPublisher(topic, address)
+			for{
+				fmt.Println("Enter the message you want to publish to topic " + strings.TrimRight(topic, "\n") + ".")
+				message, _ := reader.ReadString('\n')
+				p.Publish(model.Content{Content: message})
+				fmt.Println("==================================================")
 			}
-		}
-	})()
-
-	go (func() {
-		for {
-			j, more := <-c2
-			if more {
-				fmt.Println("received msg", j)
-			} else {
-				fmt.Println("received all msgs")
-				return
+		} else if strings.HasPrefix(choice, "2") {
+			// SUBSCRIBER
+			for {
+				fmt.Println("Enter the name of the topic you want to subscribe to.")
+				topic, _ := reader.ReadString('\n')
+				s1 := subscriber.NewSubscriber(topic, address)
+				c1 := s1.Subscribe()
+				end := make(chan interface{}, 74000)
+				fmt.Println("Enter x at any time to unsubscribe from topic.")
+				go (func(chan interface{}) {
+					for {
+						j, more := <-c1
+						if more {
+							fmt.Println("Received message: ", j)
+						} else {
+							fmt.Println("Unsubscribed from topic.")
+							close(end)
+							return
+						}
+					}
+				})(end)
+				go (func() {
+					for {
+						unsub, _ := reader.ReadString('\n')
+						if strings.HasPrefix(unsub, "x") {
+							s1.Unsubscribe()
+						}
+					}
+				})()
+				<- end
+				fmt.Println("==================================================")
 			}
+		} else if strings.HasPrefix(choice, "3") {
+			// BROKER
+			b := broker.NewBroker()
+			b.Listen()
+		} else {
+			fmt.Println("Escolhe direito")
 		}
-	})()
-
-	go (func() {
-		for {
-			j, more := <-c3
-			if more {
-				fmt.Println("received msg", j)
-			} else {
-				fmt.Println("received all msgs")
-				return
-			}
-		}
-	})()
-
-	time.Sleep(2 * time.Second)
-	p := publisher.NewPublisher("banana", address)
-	p.Publish(model.Content{Content: "trato feito"})
-	p.Publish(model.Content{Content: "trato feito22"})
-
-	time.Sleep(2 * time.Second)
-	s1.Unsubscribe()
-	s2.Unsubscribe()
-	s3.Unsubscribe()
-
-	time.Sleep(10000 * time.Second)
+	}
 }

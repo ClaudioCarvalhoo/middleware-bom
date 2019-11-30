@@ -5,6 +5,7 @@ import (
 	"middleware-bom/model"
 	"middleware-bom/util"
 	"net"
+	"time"
 )
 
 type Subscriber struct {
@@ -27,18 +28,30 @@ func NewSubscriber(topic string, address string) *Subscriber {
 }
 
 func (s *Subscriber) Subscribe() chan interface{} {
-	c := make(chan interface{})
+	c := make(chan interface{}, 74000)
 
 	content := model.Content{Content: "►►►sub◄◄◄"}
 	util.SendMessage(s.topic, s.encoder, content)
 
 	go (func(c chan interface{}) {
 		for {
-			_, cont := util.ReceiveMessage(s.decoder)
-			if cont.Content == "►►►closed◄◄◄" {
-				close(c)
-			} else {
-				c <- cont.Content
+			_, cont, err := util.ReceiveMessage(s.decoder)
+			if err != nil {
+				time.Sleep(100 * time.Millisecond)
+				conn, err := net.Dial("tcp", s.connection.RemoteAddr().String())
+				if err == nil {
+					s.connection = conn
+					s.encoder = json.NewEncoder(conn)
+					s.decoder = json.NewDecoder(conn)
+					err = nil
+					s.Subscribe()
+				}
+			}else{
+				if cont.Content == "►►►closed◄◄◄" {
+					close(c)
+				} else {
+					c <- cont.Content
+				}
 			}
 		}
 	})(c)

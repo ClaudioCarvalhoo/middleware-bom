@@ -5,6 +5,7 @@ import (
 	"middleware-bom/util"
 	"net"
 	"sync"
+	"time"
 )
 
 type Broker struct {
@@ -30,7 +31,7 @@ func (b *Broker) Attach(conn net.Conn) *Subscriber {
 	b.subscribersCount = b.subscribersCount + 1
 	s := &Subscriber{
 		id:         id,
-		messages:   make(chan *Message),
+		messages:   make(chan *Message, 74000),
 		lock:       &sync.RWMutex{},
 		topic:      "",
 		connection: conn,
@@ -108,7 +109,11 @@ func (b *Broker) Listen() {
 			var s *Subscriber
 			jsonDecoder := json.NewDecoder(conn)
 			for {
-				message, content := util.ReceiveMessage(jsonDecoder)
+				message, content, err := util.ReceiveMessage(jsonDecoder)
+				if err != nil {
+					time.Sleep(100 * time.Millisecond)
+					continue
+				}
 				topic := message.Topic
 				if content.Content == "►►►sub◄◄◄" {
 					s = b.Attach(conn)
@@ -118,6 +123,7 @@ func (b *Broker) Listen() {
 				} else if content.Content == "►►►ping◄◄◄" {
 					continue
 				} else {
+					print(content.Content)
 					b.Broadcast(content.Content, topic)
 				}
 			}

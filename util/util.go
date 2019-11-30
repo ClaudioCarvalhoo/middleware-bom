@@ -18,18 +18,24 @@ func SendMessage(topic string, encoder *json.Encoder, content interface{}) error
 	return err
 }
 
-func ReceiveMessage(decoder *json.Decoder) (model.Message, model.Content) {
+func ReceiveMessage(decoder *json.Decoder) (*model.Message, *model.Content, error) {
 	var msg []byte
 	err := decoder.Decode(&msg)
-	PanicIfErr(err)
+	if err != nil {
+		return nil, nil, err
+	}
 	var decodedMsg model.Message
 	err = json.Unmarshal(msg, &decodedMsg)
-	PanicIfErr(err)
+	if err != nil {
+		return nil, nil, err
+	}
 	var content model.Content
 	err = json.Unmarshal(decodedMsg.Content, &content)
-	PanicIfErr(err)
+	if err != nil {
+		return nil, nil, err
+	}
 
-	return decodedMsg, content
+	return &decodedMsg, &content, nil
 }
 
 func PanicIfErr(err error) {

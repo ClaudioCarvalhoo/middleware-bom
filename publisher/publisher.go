@@ -5,6 +5,7 @@ import (
 	"middleware-bom/model"
 	"middleware-bom/util"
 	"net"
+	"time"
 )
 
 type Publisher struct {
@@ -22,7 +23,7 @@ func NewPublisher(topic string, address string) *Publisher {
 		topic:        topic,
 		connection:   conn,
 		encoder:      json.NewEncoder(conn),
-		offlineQueue: make(chan interface{}),
+		offlineQueue: make(chan interface{}, 74000),
 	}
 	go p.startOfflineQueue()
 	return p
@@ -43,6 +44,14 @@ func (p *Publisher) startOfflineQueue() {
 						continue
 					}
 					break
+				}else{
+					time.Sleep(100 * time.Millisecond)
+					conn, err := net.Dial("tcp", p.connection.RemoteAddr().String())
+					if err == nil {
+						p.connection = conn
+						p.encoder = json.NewEncoder(conn)
+						err = nil
+					}
 				}
 			}
 		} else {
