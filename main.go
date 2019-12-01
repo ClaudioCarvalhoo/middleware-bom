@@ -48,7 +48,7 @@ func main() {
 							fmt.Println("Received message: ", j)
 						} else {
 							fmt.Println("Unsubscribed from topic.")
-							close(end)
+							end <- "end"
 							return
 						}
 					}
